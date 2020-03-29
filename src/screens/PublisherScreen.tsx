@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, Button, StyleSheet} from 'react-native';
+import React, {useEffect, useState, useRef} from 'react';
+import {View, Text, Button, StyleSheet, ScrollView} from 'react-native';
 import {
   registerGlobals,
   RTCView,
@@ -9,6 +9,8 @@ import {
 import {ConferenceApi} from '../mediaStreaming/conference-api';
 
 const PublisherScreen = () => {
+  let capture = useRef();
+
   const [stream, setStream] = useState(null);
   useEffect(() => {
     registerGlobals();
@@ -18,7 +20,6 @@ const PublisherScreen = () => {
   }, []);
 
   const onPublish = async () => {
-    let capture;
     // const br = $(`#playback-video-bit-rate`);
     // const bitrate = parseInt($('#bitrateInput').value);
     const bitrate = 0;
@@ -54,7 +55,7 @@ const PublisherScreen = () => {
         .then(stream => {
           console.log('stream', stream);
           try {
-            capture = new ConferenceApi({
+            capture.current = new ConferenceApi({
               maxIncomingBitrate: bitrate || 0,
               simulcast: false,
               stream: 'stream1',
@@ -87,7 +88,7 @@ const PublisherScreen = () => {
                 console.log('newProducerId', id, kind);
               });
 
-            return capture.publish(stream);
+            return capture.current.publish(stream);
             // return stream;
             // const v = $('#capture-video');
             // v.srcObject = await capture.publish(stream);
@@ -119,13 +120,17 @@ const PublisherScreen = () => {
               alert(ERROR[e.response.status]);
             }
             console.log(e);
-            if (capture) {
+            if (capture.current) {
               // await capture.close();
             }
           }
+
           // Got stream!
         })
-        .then(video => setStream(video))
+        .then(video => {
+          console.log('capture - stream', capture.current);
+          setStream(video);
+        })
         .catch(error => {
           // Log error
         });
@@ -141,25 +146,38 @@ const PublisherScreen = () => {
       // send event.candidate to peer
     };
   };
-  console.log('stream.toURL() ', stream && stream.toURL());
+
+  const onUnpublish = async () => {
+    console.log('capture', capture.current);
+
+    await capture.current.close();
+  };
+
+  console.log('capture - return', capture.current);
   return (
+    // <ScrollView style={{flex: 1, flexDirection: 'column'}}>
     <View style={styles.container}>
-      <Button title="Publish" onPress={onPublish} />
       {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />}
+      <Button title="Publish" onPress={onPublish} />
+      <Button title="Unpublish" onPress={onUnpublish} />
     </View>
+    // </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   video1: {
     flex: 1,
-    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: 300,
+    // ...StyleSheet.absoluteFillObject,
   },
 });
 

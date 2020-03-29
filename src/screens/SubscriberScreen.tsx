@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {View, Text, StyleSheet, Button} from 'react-native';
 import {
   registerGlobals,
@@ -28,6 +28,7 @@ const configs = {
 
 const SubscriberScreen = () => {
   const [stream, setStream] = useState(null);
+  let playback = useRef();
 
   useEffect(() => {
     registerGlobals();
@@ -53,7 +54,7 @@ const SubscriberScreen = () => {
 
     console.log('HERE');
 
-    const playback = new ConferenceApi({
+    playback.current = new ConferenceApi({
       kinds: ['audio', 'video'],
       stream: 'stream1',
       url,
@@ -155,9 +156,11 @@ const SubscriberScreen = () => {
       console.log('[onRemoteTrack] mediaStream tracks: ', tracks);
     };
 
-    playback.on('addtrack', onAddTrack).on('removetrack', onRemoteTrack);
+    playback.current
+      .on('addtrack', onAddTrack)
+      .on('removetrack', onRemoteTrack);
 
-    const mediaStream = await playback.subscribe();
+    const mediaStream = await playback.current.subscribe();
 
     console.log('mediaStream 1.0: ', mediaStream);
     // console.log('url 1.0: ', mediaStream.toURL());
@@ -187,12 +190,18 @@ const SubscriberScreen = () => {
 
     // console.log('transport: ', this.transport);
   };
-  console.log('stream', stream);
+
+  const stopPlaying = async () => {
+    console.log('capture', playback.current);
+
+    await playback.current.close();
+  };
 
   return (
     <View style={styles.container}>
-      <Button title="Consume" onPress={onConsume} />
       {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />}
+      <Button title="Consume" onPress={onConsume} />
+      <Button title="Stop Playing" onPress={stopPlaying} />
     </View>
   );
 };
