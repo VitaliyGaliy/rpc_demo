@@ -191,8 +191,7 @@ const SubscriberScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <Button title="consume" onPress={onConsume} />
+      <Button title="Consume" onPress={onConsume} />
       {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />}
     </View>
   );

@@ -141,7 +141,7 @@ const PublisherScreen = () => {
 
   return (
     <View>
-      <Button title="consume" onPress={onPublish} />
+      <Button title="Publish" onPress={onPublish} />
     </View>
   );
 };
