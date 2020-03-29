@@ -138,7 +138,6 @@ const SubscriberScreen = () => {
       const tracks = mediaStream.getTracks();
 
       console.log('[onAddTrack] mediaStream tracks: ', tracks);
-      console.log('new MediaStream(tracks)!!!!!!!!!!', MediaStream);
 
       if (tracks.length == 2) {
         setStream(new MediaStream(tracks));

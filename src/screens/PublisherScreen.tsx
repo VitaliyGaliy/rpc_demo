@@ -1,5 +1,5 @@
-import React, {useEffect} from 'react';
-import {View, Text, Button} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, Button, StyleSheet} from 'react-native';
 import {
   registerGlobals,
   RTCView,
@@ -9,6 +9,7 @@ import {
 import {ConferenceApi} from '../../conference-api';
 
 const PublisherScreen = () => {
+  const [stream, setStream] = useState(null);
   useEffect(() => {
     registerGlobals();
     // return () => {
@@ -85,8 +86,9 @@ const PublisherScreen = () => {
                 // conferenceIds[kind] = id;
                 console.log('newProducerId', id, kind);
               });
-            console.log('stream', stream);
-            capture.publish(stream);
+
+            return capture.publish(stream);
+            // return stream;
             // const v = $('#capture-video');
             // v.srcObject = await capture.publish(stream);
             // let playPromise = v.play();
@@ -123,6 +125,7 @@ const PublisherScreen = () => {
           }
           // Got stream!
         })
+        .then(video => setStream(video))
         .catch(error => {
           // Log error
         });
@@ -138,12 +141,26 @@ const PublisherScreen = () => {
       // send event.candidate to peer
     };
   };
-
+  console.log('stream.toURL() ', stream && stream.toURL());
   return (
-    <View>
+    <View style={styles.container}>
       <Button title="Publish" onPress={onPublish} />
+      {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  video1: {
+    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+  },
+});
 
 export default PublisherScreen;
