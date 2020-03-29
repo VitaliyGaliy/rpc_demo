@@ -6,8 +6,9 @@ import {
   MediaStreamTrack,
   mediaDevices,
 } from 'react-native-webrtc';
-import {API_OPERATION} from '../../mediasoup/config/constants';
-import {ConferenceApi} from '../../conference-api';
+import {API_OPERATION} from '../mediaStreaming/config/constants';
+
+import {ConferenceApi} from '../mediaStreaming/conference-api';
 
 const api = null;
 const device = null;

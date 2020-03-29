@@ -6,7 +6,7 @@ import {
   MediaStreamTrack,
   mediaDevices,
 } from 'react-native-webrtc';
-import {ConferenceApi} from '../../conference-api';
+import {ConferenceApi} from '../mediaStreaming/conference-api';
 
 const PublisherScreen = () => {
   const [stream, setStream] = useState(null);
