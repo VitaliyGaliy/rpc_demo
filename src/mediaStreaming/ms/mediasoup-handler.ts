@@ -1,8 +1,5 @@
 import {Consumer} from 'mediasoup/lib/Consumer';
-import {
-  MediaKind,
-  RtpCapabilities,
-} from '../../../src/mediaStreaming/config/node_modules/mediasoup/lib/RtpParameters';
+import {MediaKind, RtpCapabilities} from 'mediasoup/lib/RtpParameters';
 import {
   ConsumeRequest,
   ConsumeResponse,

@@ -1,45 +1,58 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet, Button} from 'react-native';
+import {View, Text, StyleSheet, Button, ActivityIndicator} from 'react-native';
 import {
   registerGlobals,
   RTCView,
   MediaStreamTrack,
   mediaDevices,
 } from 'react-native-webrtc';
-import {API_OPERATION} from '../mediaStreaming/config/constants';
 
 import {ConferenceApi} from '../mediaStreaming/conference-api';
+import {useFocusEffect} from '@react-navigation/native';
 
-const api = null;
-const device = null;
-const iceServers = null;
-const simulcast = null;
-const player = null;
-const transportTimeout: any;
-const transport: any;
-const operation: API_OPERATION = API_OPERATION.SUBSCRIBE;
-const configs = {
-  maxIncomingBitrate: 0,
-  timeout: {
-    stats: 1000,
-    stream: 30000,
-  },
-};
+// const api = null;
+// const device = null;
+// const iceServers = null;
+// const simulcast = null;
+// const player = null;
+// const transportTimeout: any;
+// const transport: any;
+// const operation: API_OPERATION = API_OPERATION.SUBSCRIBE;
+// const configs = {
+//   maxIncomingBitrate: 0,
+//   timeout: {
+//     stats: 1000,
+//     stream: 30000,
+//   },
+// };
 
 const SubscriberScreen = () => {
   const [stream, setStream] = useState(null);
-  let playback = useRef();
+  const [connection, setConnection] = useState<Boolean | string>(false);
+  let playback = useRef<ConferenceApi>();
 
   useEffect(() => {
     registerGlobals();
-    // return () => {
-    //   cleanup
-    // };
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        try {
+          if (playback.current) {
+            playback.current.close().then(() => {
+              setStream(null);
+              setConnection(false);
+            });
+          }
+        } catch (error) {}
+      };
+    }, []),
+  );
 
   const onConsume = async ev => {
     ev && ev.preventDefault && ev.preventDefault();
-
+    setConnection('pending');
     try {
       await subscribe();
     } catch (error) {
@@ -59,78 +72,13 @@ const SubscriberScreen = () => {
       stream: 'stream1',
       url,
       token,
-    })
-      .on('bitRate', ({bitRate, kind}) => {
-        console.log('bitrate: ', bitRate);
-        // if(kind==='video'){
-        //     br.innerText=Math.round(bitRate).toString();
-        //     if(bitRate>0){
-        //         br.classList.add('connected');
-        //     }
-        //     else {
-        //         br.classList.remove('connected');
-        //     }
-        // }
-      })
-      .on('connectionstatechange', ({state}) => {
-        console.log('connectionstatechange 2.0', state);
-        // console.log('connectionstatechange',state);
-        // if(state==='connected'){
-        //     connectionBox.classList.add('connected');
-        // }
-        // else {
-        //     connectionBox.classList.remove('connected');
-        // }
-      })
-      .on('newConsumerId', ({id, kind}) => {
-        // conferenceIds[kind]=id;
-        console.log('newConsumerId', id, kind);
-      });
-
-    const streams = [];
-
-    const onStreamChange = () => {
-      console.log('onStreamChange 1.0', mediaStream.getTracks());
-
-      const tracks = mediaStream.getTracks();
-
-      // tracks.forEach(track => {
-      //   if (track.kind === 'audio') {
-      //     streams.push(track);
-      //   } else if (track.kind === 'video') {
-      //     streams.push(track);
-      //   }
-      // });
-
-      // console.log('streams: ', tracks);
-
-      // if (tracks.length != 2) {
-      //   return;
-      // }
-
-      // console.log('onStreamChange 1.2.0', tracks);
-
-      // const mediaStream2 = new MediaStream(tracks);
-
-      // console.log('mediaStream._reactTag: ', mediaStream2._reactTag);
-
-      // this.setState({ stream: mediaStream2 });
-
-      // console.log('onStreamChange 1.2.1');
-    };
-
-    // playback.on('addtrack', async () => {
-    //   console.log('addtrack 1.0.0');
-
-    //   const mediaStream = await playback.subscribe();
-
-    //   console.log('mediaStream 2.0: ', mediaStream);
-    //   console.log('url 2.0: ', mediaStream.getTracks());
-
-    //   this.setState({ stream: new MediaStream(mediaStream.getTracks()) });
-
-    //   console.log('addtrack 1.1.0');
-    // });
+    }).on('connectionstatechange', ({state}) => {
+      console.log('connectionstatechange', state);
+      if (state === 'connected') {
+        setConnection(true);
+      } else {
+      }
+    });
 
     const onAddTrack = track => {
       console.log('onAddTrack', track);
@@ -146,62 +94,45 @@ const SubscriberScreen = () => {
       }
     };
 
-    const onRemoteTrack = track => {
-      console.log('onRemoteTrack', track);
+    const onRemoveTrack = track => {
+      console.log('onRemoveTrack', track);
       console.log('mediaStream 2.0 ', mediaStream._reactTag);
       mediaStream.removeTrack(track.track);
 
       const tracks = mediaStream.getTracks();
 
-      console.log('[onRemoteTrack] mediaStream tracks: ', tracks);
+      console.log('[onRemoveTrack] mediaStream tracks: ', tracks);
     };
 
     playback.current
       .on('addtrack', onAddTrack)
-      .on('removetrack', onRemoteTrack);
+      .on('removetrack', onRemoveTrack);
 
     const mediaStream = await playback.current.subscribe();
 
     console.log('mediaStream 1.0: ', mediaStream);
-    // console.log('url 1.0: ', mediaStream.toURL());
-
-    // this.setState({ stream: mediaStream });
-
-    // console.log('player: ', this.player);
-    // this.player.srcObject=mediaStream;
-    // this.player.play();
-
-    // this.api = new MediasoupRestApi(url, token);
-    // this.device = new Device({ handlerName: 'ReactNative' });
-
-    // const { routerRtpCapabilities, iceServers, simulcast } = await this.api.getServerConfigs();
-
-    // if (routerRtpCapabilities.headerExtensions) {
-    //   routerRtpCapabilities.headerExtensions = routerRtpCapabilities.headerExtensions.
-    //     filter((ext) => ext.uri !== 'urn:3gpp:video-orientation');
-    // }
-
-    // await this.device.load({ routerRtpCapabilities });
-
-    // this.iceServers = iceServers;
-    // this.simulcast = simulcast;
-
-    // await this.getTransport();
-
-    // console.log('transport: ', this.transport);
   };
 
   const stopPlaying = async () => {
-    console.log('capture', playback.current);
-
     await playback.current.close();
+    setConnection(false);
+    setStream(null);
+  };
+
+  const renderSwitch = connection => {
+    if (connection === false) {
+      return <Button title="Consume" onPress={onConsume} />;
+    } else if (connection === true && stream) {
+      return <Button title="Stop Playing" onPress={stopPlaying} />;
+    } else {
+      return <ActivityIndicator size="small" color="#00ff00" />;
+    }
   };
 
   return (
     <View style={styles.container}>
       {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />}
-      <Button title="Consume" onPress={onConsume} />
-      <Button title="Stop Playing" onPress={stopPlaying} />
+      {renderSwitch(connection)}
     </View>
   );
 };
@@ -217,6 +148,8 @@ const styles = StyleSheet.create({
   },
   video1: {
     flex: 1,
-    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: 300,
+    // ...StyleSheet.absoluteFillObject,
   },
 });

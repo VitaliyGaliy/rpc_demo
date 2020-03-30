@@ -6,14 +6,14 @@ import {
   RtpCapabilities,
   RtpCodecParameters,
   RtpParameters,
-} from '../../../src/mediaStreaming/config/node_modules/mediasoup/lib/RtpParameters';
+} from 'mediasoup/lib/RtpParameters';
 import {RtpCapabilities as ClientRtpCapabilities} from 'mediasoup-client/lib/RtpParameters';
 import {
   ConsumeRequest as ClientConsumeRequest,
   ConsumeResponse as ClientConsumeResponse,
   IceSever,
   Simulcast,
-} from '../front/src/client-interfaces';
+} from '../client-interfaces';
 import {TransportOptions} from 'mediasoup-client/lib/Transport';
 
 export interface MediaSoupSettings {

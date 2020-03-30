@@ -1,6 +1,13 @@
 import React from 'react';
-import {StyleSheet, Text, View, Button} from 'react-native';
-
+console.log('Reactotron Configured');
+if (__DEV__) {
+  import('./src/debugger/ReactotronConfig').then(() =>
+    console.log('Reactotron Configured'),
+  );
+}
+// if (__DEV__) {
+//   console = reactotron;
+// }
 import Navigation from './src/navigation';
 
 export default () => <Navigation />;
