@@ -6,6 +6,7 @@ import {
   MediaStreamTrack,
   mediaDevices,
 } from 'react-native-webrtc';
+import {activateKeepAwake, deactivateKeepAwake} from 'expo-keep-awake';
 
 import {ConferenceApi} from '../mediaStreaming/conference-api';
 import {useFocusEffect} from '@react-navigation/native';
@@ -43,6 +44,7 @@ const SubscriberScreen = () => {
             playback.current.close().then(() => {
               setStream(null);
               setConnection(false);
+              deactivateKeepAwake();
             });
           }
         } catch (error) {}
@@ -76,6 +78,7 @@ const SubscriberScreen = () => {
       console.log('connectionstatechange', state);
       if (state === 'connected') {
         setConnection(true);
+        activateKeepAwake();
       } else {
       }
     });
@@ -117,6 +120,7 @@ const SubscriberScreen = () => {
     await playback.current.close();
     setConnection(false);
     setStream(null);
+    deactivateKeepAwake();
   };
 
   const renderSwitch = connection => {

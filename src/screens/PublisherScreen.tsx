@@ -14,6 +14,7 @@ import {
   mediaDevices,
 } from 'react-native-webrtc';
 import {useFocusEffect} from '@react-navigation/native';
+import {activateKeepAwake, deactivateKeepAwake} from 'expo-keep-awake';
 
 import {ConferenceApi} from '../mediaStreaming/conference-api';
 import {ERROR} from '../mediaStreaming/config/constants';
@@ -35,6 +36,7 @@ const PublisherScreen = () => {
             capture.current.close().then(() => {
               setConnection(false);
               setStream(null);
+              deactivateKeepAwake();
             });
           }
         } catch (error) {}
@@ -106,6 +108,7 @@ const PublisherScreen = () => {
         })
         .then(video => {
           setStream(video);
+          activateKeepAwake();
         })
         .catch(error => {
           // Log error
@@ -119,6 +122,7 @@ const PublisherScreen = () => {
         await capture.current.close();
         setConnection(false);
         setStream(null);
+        deactivateKeepAwake();
       }
     } catch (error) {}
   };
