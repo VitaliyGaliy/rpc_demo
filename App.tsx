@@ -1,4 +1,6 @@
 import React from 'react';
+
+console.disableYellowBox = true;
 console.log('Reactotron Configured');
 if (__DEV__) {
   import('./src/debugger/ReactotronConfig').then(() =>
