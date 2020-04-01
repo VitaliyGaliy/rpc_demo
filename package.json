@@ -30,7 +30,7 @@
     "react-native-screens": "^2.4.0",
     "react-native-unimodules": "^0.7.0",
     "react-native-web": "^0.12.2",
-    "react-native-webrtc": "^1.75.3",
+    "react-native-webrtc": "VitaliyGaliy/react-native-webrtc",
     "reactotron-react-native": "^5.0.0"
   },
   "devDependencies": {

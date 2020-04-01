@@ -8,8 +8,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {
-  registerGlobals,
   RTCView,
+  registerGlobals,
   MediaStreamTrack,
   mediaDevices,
 } from 'react-native-webrtc';
@@ -64,53 +64,61 @@ const PublisherScreen = () => {
         }
       }
       mediaDevices
-        .getUserMedia({
-          audio: true,
+        .getDisplayMedia({
+          // audio: true,
           video: {
             mandatory: {
               minWidth: 500, // Provide your own width, height and frame rate here
               minHeight: 300,
               minFrameRate: 30,
             },
-            facingMode: isFront ? 'user' : 'environment',
-            optional: videoSourceId ? [{sourceId: videoSourceId}] : [],
+            // facingMode: isFront ? 'user' : 'environment',
+            // optional: videoSourceId ? [{sourceId: videoSourceId}] : [],
           },
         })
         .then(stream => {
           try {
             capture.current = new ConferenceApi({
               maxIncomingBitrate: bitrate || 0,
-              simulcast: false,
+              // simulcast: true,
               stream: 'stream1',
-              url: 'https://rpc.codeda.com/0',
+              url: 'https://rpc-staging-ms.codeda.com/0 ',
               token:
                 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdHJlYW0iOiJzdHJlYW0xIiwib3BlcmF0aW9uIjoiMSIsImV4cCI6MTU4NTg0MDk4MiwiaWF0IjoxNTg0ODA0MTgyfQ.GApJ3KjICTCc0KqE_vXAfc1tfV9cR4VQY1t9cjlozyRjpZC5yNWQ180XgFV-1dwwS9CI1wWzVZ-hBDgOMYj5Qw',
             }).on('connectionstatechange', ({state}) => {
               console.log('connectionstatechange', state);
               if (state === 'connected') {
+                console.log('state === connected');
+
                 setConnection(true);
               } else {
               }
             });
+            console.log('');
 
-            return capture.current.publish(stream);
+            capture.current.publish(stream);
+            // capture.current.publish(stream);
           } catch (e) {
             if (e.response && e.response.status && ERROR[e.response.status]) {
               console.log('ERROR', ERROR[e.response.status]);
               alert(ERROR[e.response.status]);
             }
-            console.log(e);
             if (capture.current) {
               capture.current.close();
             }
           }
+          return stream;
+          console.log('Got stream!', stream);
           // Got stream!
         })
         .then(video => {
+          // console.log('Got video!', video.toURL());
           setStream(video);
           activateKeepAwake();
         })
         .catch(error => {
+          console.log('error@@@@@@@@', error);
+
           // Log error
         });
     });
@@ -136,7 +144,7 @@ const PublisherScreen = () => {
       return <ActivityIndicator size="small" color="#00ff00" />;
     }
   };
-
+  console.log('Got video!', stream && stream.toURL());
   return (
     // <ScrollView style={{flex: 1, flexDirection: 'column'}}>
     <View style={styles.container}>

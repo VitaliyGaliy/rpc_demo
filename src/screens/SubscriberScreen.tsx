@@ -1,10 +1,11 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {View, Text, StyleSheet, Button, ActivityIndicator} from 'react-native';
 import {
-  registerGlobals,
+  // registerGlobals,
   RTCView,
   MediaStreamTrack,
   mediaDevices,
+  MediaStream,
 } from 'react-native-webrtc';
 import {activateKeepAwake, deactivateKeepAwake} from 'expo-keep-awake';
 
@@ -33,7 +34,7 @@ const SubscriberScreen = () => {
   let playback = useRef<ConferenceApi>();
 
   useEffect(() => {
-    registerGlobals();
+    // registerGlobals();
   }, []);
 
   useFocusEffect(

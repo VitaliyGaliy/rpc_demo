@@ -14,8 +14,15 @@ import {
   Simulcast,
 } from './client-interfaces';
 
-// import type {MediaStreamTrack} from 'react-native-webrtc';
+import {
+  // registerGlobals,
+  RTCView,
+  MediaStreamTrack,
+  mediaDevices,
+  MediaStream,
+} from 'react-native-webrtc';
 
+// import type {MediaStreamTrack} from 'react-native-webrtc';
 export default class MediaStreamTrackEvent {
   type: string;
   track: MediaStreamTrack;
@@ -184,9 +191,15 @@ export class ConferenceApi extends EventEmitter implements IConferenceApi {
   async publish(mediaStream: MediaStream): Promise<MediaStream> {
     await this.init(API_OPERATION.PUBLISH);
     this.mediaStream = mediaStream;
+
     await Promise.all(
-      mediaStream.getTracks().map(track => this.publishTrack(track)),
+      mediaStream.getTracks().map(track => {
+        console.log('@@@@@@@@mediaStream track@@@@@@@@@@', track);
+
+        this.publishTrack(track);
+      }),
     );
+
     return mediaStream;
   }
   async subscribe(): Promise<MediaStream> {
@@ -244,6 +257,7 @@ export class ConferenceApi extends EventEmitter implements IConferenceApi {
   }
   private async publishTrack(track: MediaStreamTrack): Promise<void> {
     const kind: MediaKind = track.kind as MediaKind;
+
     if (this.configs.kinds.includes(kind)) {
       track.addEventListener('ended', async () => {
         const producer = this.connectors.get(kind);
@@ -255,6 +269,7 @@ export class ConferenceApi extends EventEmitter implements IConferenceApi {
         }
       });
       const params: ProducerOptions = {track};
+
       if (this.configs.simulcast && kind === 'video' && this.simulcast) {
         if (this.simulcast.encodings) {
           params.encodings = this.simulcast.encodings;
@@ -263,10 +278,15 @@ export class ConferenceApi extends EventEmitter implements IConferenceApi {
           params.codecOptions = this.simulcast.codecOptions;
         }
       }
-      const producer = await this.transport.produce(params);
-      this.listenStats(producer, 'outbound-rtp');
-      this.connectors.set(kind, producer);
-      this.emit('newProducerId', {id: producer.id, kind});
+      try {
+        // console.log('params!!!!!!!!!!!!', params);
+        const producer = await this.transport.produce(params);
+        this.listenStats(producer, 'outbound-rtp');
+        this.connectors.set(kind, producer);
+        this.emit('newProducerId', {id: producer.id, kind});
+      } catch (error) {
+        console.log('error!!!!!!!!!!!!', error);
+      }
     }
   }
   private async consume(
