@@ -108,7 +108,7 @@ export class MediasoupRestApi implements IMediasoupApi {
     }
   }
   private async request(action, json = {}): Promise<object> {
-    console.log('sent message', action, JSON.stringify(json));
+    // console.log('sent message', action, JSON.stringify(json));
     try {
       const {data} = await axios.post(
         `${this.url}/${PATH.MEDIASOUP}/${action}`,
@@ -120,7 +120,7 @@ export class MediasoupRestApi implements IMediasoupApi {
           },
         },
       );
-      console.log('got message', action, JSON.stringify(data));
+      // console.log('got message', action, JSON.stringify(data));
       return data;
     } catch (e) {
       if (!e.response.status && !ERROR[e.response.status]) {

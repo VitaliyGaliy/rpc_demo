@@ -1,3 +1,5 @@
+import debug from 'debug';
+
 import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
@@ -8,8 +10,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {
-  RTCView,
   registerGlobals,
+  RTCView,
   MediaStreamTrack,
   mediaDevices,
 } from 'react-native-webrtc';
@@ -19,6 +21,8 @@ import {activateKeepAwake, deactivateKeepAwake} from 'expo-keep-awake';
 import {ConferenceApi} from '../mediaStreaming/conference-api';
 import {ERROR} from '../mediaStreaming/config/constants';
 
+debug.enable('*');
+
 const PublisherScreen = () => {
   let capture = useRef<ConferenceApi>();
   const [stream, setStream] = useState(null);
@@ -26,6 +30,51 @@ const PublisherScreen = () => {
 
   useEffect(() => {
     registerGlobals();
+
+    setConnection('pending');
+
+    // const pc = new RTCPeerConnection(configuration);
+
+    let isFront = true;
+    mediaDevices.enumerateDevices().then(sourceInfos => {
+      console.log(sourceInfos);
+      let videoSourceId;
+      for (let i = 0; i < sourceInfos.length; i++) {
+        const sourceInfo = sourceInfos[i];
+        if (
+          sourceInfo.kind == 'videoinput' &&
+          sourceInfo.facing == (isFront ? 'front' : 'environment')
+        ) {
+          videoSourceId = sourceInfo.deviceId;
+        }
+      }
+      mediaDevices
+        .getDisplayMedia({
+          audio: false,
+          video: {
+            mandatory: {
+              minWidth: 500, // Provide your own width, height and frame rate here
+              minHeight: 300,
+              minFrameRate: 30,
+            },
+            facingMode: isFront ? 'user' : 'environment',
+            optional: videoSourceId ? [{sourceId: videoSourceId}] : [],
+          },
+        })
+        .then(stream => {
+          // console.log('stream', stream);
+          setStream(stream);
+          setConnection(true);
+          // Got stream!
+        })
+        .then(video => {
+          // setStream(video);
+          activateKeepAwake();
+        })
+        .catch(error => {
+          // Log error
+        });
+    });
   }, []);
 
   useFocusEffect(
@@ -45,83 +94,43 @@ const PublisherScreen = () => {
   );
 
   const onPublish = async () => {
-    setConnection('pending');
+    // setConnection('pending');
     const bitrate = 0;
     const configuration = {iceServers: [{url: 'stun:stun.l.google.com:19302'}]};
-    // const pc = new RTCPeerConnection(configuration);
-
-    let isFront = true;
-    mediaDevices.enumerateDevices().then(sourceInfos => {
-      console.log(sourceInfos);
-      let videoSourceId;
-      for (let i = 0; i < sourceInfos.length; i++) {
-        const sourceInfo = sourceInfos[i];
-        if (
-          sourceInfo.kind == 'videoinput' &&
-          sourceInfo.facing == (isFront ? 'front' : 'environment')
-        ) {
-          videoSourceId = sourceInfo.deviceId;
+    try {
+      capture.current = new ConferenceApi({
+        maxIncomingBitrate: bitrate || 0,
+        simulcast: false,
+        stream: 'stream1',
+        url: 'https://rpc.codeda.com/0',
+        token:
+          'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdHJlYW0iOiJzdHJlYW0xIiwib3BlcmF0aW9uIjoiMSIsImV4cCI6MTU4NTg0MDk4MiwiaWF0IjoxNTg0ODA0MTgyfQ.GApJ3KjICTCc0KqE_vXAfc1tfV9cR4VQY1t9cjlozyRjpZC5yNWQ180XgFV-1dwwS9CI1wWzVZ-hBDgOMYj5Qw',
+      }).on('connectionstatechange', ({state}) => {
+        // console.log('connectionstatechange', state);
+        if (state === 'connected') {
+          setConnection(true);
+        } else {
         }
+      });
+
+      // console.log(
+      //   ' stream.getVideoTracks()[0].getCapabilities()',
+      //   stream.getVideoTracks()[0].getCapabilities(),
+      // );
+      // console.log('stream..getConstraints()', stream.getConstraints());
+      // console.log('stream!!!', stream.captureStream);
+
+      return capture.current.publish(stream);
+    } catch (e) {
+      if (e.response && e.response.status && ERROR[e.response.status]) {
+        console.log('ERROR', ERROR[e.response.status]);
+        alert(ERROR[e.response.status]);
       }
-      mediaDevices
-        .getDisplayMedia({
-          // audio: true,
-          video: {
-            mandatory: {
-              minWidth: 500, // Provide your own width, height and frame rate here
-              minHeight: 300,
-              minFrameRate: 30,
-            },
-            // facingMode: isFront ? 'user' : 'environment',
-            // optional: videoSourceId ? [{sourceId: videoSourceId}] : [],
-          },
-        })
-        .then(stream => {
-          try {
-            capture.current = new ConferenceApi({
-              maxIncomingBitrate: bitrate || 0,
-              // simulcast: true,
-              stream: 'stream1',
-              url: 'https://rpc-staging-ms.codeda.com/0 ',
-              token:
-                'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdHJlYW0iOiJzdHJlYW0xIiwib3BlcmF0aW9uIjoiMSIsImV4cCI6MTU4NTg0MDk4MiwiaWF0IjoxNTg0ODA0MTgyfQ.GApJ3KjICTCc0KqE_vXAfc1tfV9cR4VQY1t9cjlozyRjpZC5yNWQ180XgFV-1dwwS9CI1wWzVZ-hBDgOMYj5Qw',
-            }).on('connectionstatechange', ({state}) => {
-              console.log('connectionstatechange', state);
-              if (state === 'connected') {
-                console.log('state === connected');
-
-                setConnection(true);
-              } else {
-              }
-            });
-            console.log('');
-
-            capture.current.publish(stream);
-            // capture.current.publish(stream);
-          } catch (e) {
-            if (e.response && e.response.status && ERROR[e.response.status]) {
-              console.log('ERROR', ERROR[e.response.status]);
-              alert(ERROR[e.response.status]);
-            }
-            if (capture.current) {
-              capture.current.close();
-            }
-          }
-          return stream;
-          console.log('Got stream!', stream);
-          // Got stream!
-        })
-        .then(video => {
-          // console.log('Got video!', video.toURL());
-          setStream(video);
-          activateKeepAwake();
-        })
-        .catch(error => {
-          console.log('error@@@@@@@@', error);
-
-          // Log error
-        });
-    });
+      console.log(e);
+      if (capture.current) {
+        capture.current.close();
+      }
+    }
   };
 
   const onUnpublish = async () => {
@@ -144,12 +153,13 @@ const PublisherScreen = () => {
       return <ActivityIndicator size="small" color="#00ff00" />;
     }
   };
-  console.log('Got video!', stream && stream.toURL());
+  // console.log('stream return', stream);
+
   return (
     // <ScrollView style={{flex: 1, flexDirection: 'column'}}>
     <View style={styles.container}>
       {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />}
-      {renderSwitch(connection)}
+      <Button title="Publish" onPress={onPublish} />
     </View>
     // </ScrollView>
   );
