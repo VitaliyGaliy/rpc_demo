@@ -165,8 +165,8 @@ const PublisherScreen = () => {
 
             socket.current.on(ACTION.SDP, ({socketId, sdp}: SocketData) => {
               console.log('on(ACTION.SDP, ', socketId, sdp);
-              pc[socketId].setRemoteDescription(sdp).then(() => {
-                console.log('ok pc[socketId].setRemoteDescription',socketId, sdp);
+              pcs[socketId].setRemoteDescription(sdp).then(() => {
+                console.log('ok pcs[socketId].setRemoteDescription',socketId, sdp);
               });
             });
             console.log('start emit(ACTION.JOIN_ROOM');
