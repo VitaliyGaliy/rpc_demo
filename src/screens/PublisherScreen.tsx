@@ -142,7 +142,7 @@ const PublisherScreen = () => {
               pcs[socketId].onicecandidate = function({candidate}) {
                 if(candidate){
                     console.log('start emit(ACTION.ICE', candidate);
-                  socket.current.emit(ACTION.ICE, {socketId, sdp: {candidate}}, e => {
+                  socket.current.emit(ACTION.ICE, {socketId, sdp: candidate}, e => {
                     console.log('ok emit(ACTION.ICE,', e);
                   });
                 }
