@@ -140,11 +140,15 @@ const PublisherScreen = () => {
               });
               pcs[socketId].addStream(stream);
               pcs[socketId].onicecandidate = function({candidate}) {
-                if(candidate){
-                    console.log('start emit(ACTION.ICE', candidate);
-                  socket.current.emit(ACTION.ICE, {socketId, sdp: {candidate}}, e => {
-                    console.log('ok emit(ACTION.ICE,', e);
-                  });
+                if (candidate) {
+                  console.log('start emit(ACTION.ICE', candidate);
+                  socket.current.emit(
+                    ACTION.ICE,
+                    {socketId, sdp: {candidate}},
+                    e => {
+                      console.log('ok emit(ACTION.ICE,', e);
+                    },
+                  );
                 }
               };
               console.log('pcs[socketId].createOffer()', socketId);
@@ -156,22 +160,18 @@ const PublisherScreen = () => {
                 );
                 pcs[socketId].setLocalDescription(desc).then(() => {
                   console.log('start emit(ACTION.SDP', desc);
-                  socket.current.emit(
-                    ACTION.SDP,
-                    {socketId, sdp: desc},
-                    e => {
-                      console.log('ok emit(ACTION.SDP', desc);
-                    },
-                  );
+                  socket.current.emit(ACTION.SDP, {socketId, sdp: desc}, e => {
+                    console.log('ok emit(ACTION.SDP', desc);
+                  });
                 });
               });
             });
 
             socket.current.on(ACTION.SDP, ({socketId, sdp}: SocketData) => {
               console.log('on(ACTION.SDP, ', socketId, sdp);
-              pc[socketId].setRemoteDescription(sdp).then(() => {
+              pcs[socketId].setRemoteDescription(sdp).then(() => {
                 console.log(
-                  'ok pc[socketId].setRemoteDescription',
+                  'ok pcs[socketId].setRemoteDescription',
                   socketId,
                   sdp,
                 );
@@ -185,7 +185,7 @@ const PublisherScreen = () => {
                 console.log('ok emit(ACTION.JOIN_ROOM');
               },
             );
-            // return stream;
+            return stream;
             // return capture.current.publish(stream);
           } catch (e) {
             if (e.response && e.response.status && ERROR[e.response.status]) {
