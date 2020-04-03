@@ -123,6 +123,7 @@ const PublisherScreen = () => {
             // });
             const pcs: Record<string, RTCPeerConnection> = {};
             socket.current.on(ACTION.JOIN_ROOM, ({socketId}: SocketData) => {
+             console.log('on(ACTION.JOIN_ROOM,', socketId);
               pcs[socketId] = new RTCPeerConnection({
                 iceServers: [
                   {
@@ -139,37 +140,39 @@ const PublisherScreen = () => {
               });
               pcs[socketId].addStream(stream);
               pcs[socketId].onicecandidate = function(event) {
-                // console.log(' pcs[socketId].onicecandidate', event);
+                console.log('start emit(ACTION.ICE', event);
                 socket.current.emit(ACTION.ICE, {socketId, sdp: event}, e => {
-                  console.log('socket.current.emit(ACTION.ICE,', e);
+                  console.log('ok emit(ACTION.ICE,', e);
                 });
               };
+              console.log('pcs[socketId].createOffer()', socketId);
               pcs[socketId].createOffer().then(desc => {
+                console.log('pcs[socketId].setLocalDescription()', socketId,desc);
                 pcs[socketId].setLocalDescription(desc).then(() => {
+                  console.log('start emit(ACTION.SDP', desc);
                   socket.current.emit(
                     ACTION.SDP,
                     {socketId, sdp: JSON.stringify(desc)},
                     e => {
-                      console.log('socket.current.emit - ACTION.SDP', socketId);
+                    console.log('ok emit(ACTION.SDP', desc);
                     },
                   );
                 });
               });
-              // получаем оффер из pc и делаем
             });
 
             socket.current.on(ACTION.SDP, ({socketId, sdp}: SocketData) => {
-              console.log(' socket.current.on(ACTION.SDP, ', socketId);
-
+              console.log('on(ACTION.SDP, ', socketId, sdp);
               pc[socketId].setRemoteDescription(sdp).then(() => {
-                console.log('pc[socketId].setRemoteDescription', sdp);
+                console.log('ok pc[socketId].setRemoteDescription',socketId, sdp);
               });
             });
+            console.log('start emit(ACTION.JOIN_ROOM');
             socket.current.emit(
               ACTION.JOIN_ROOM,
               {roomId: 'wwwwwwwwww', create: true},
               e => {
-                console.log('ACTION.JOIN_ROOM', e);
+            console.log('ok emit(ACTION.JOIN_ROOM');
               },
             );
             // return stream;
