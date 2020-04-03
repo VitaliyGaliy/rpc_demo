@@ -146,6 +146,10 @@ const PublisherScreen = () => {
               console.log(ACTION.SDP, socketId);
               pc[socketId].setRemoteDescription(sdp).then(() => {});
             });
+             socket.current.on(ACTION.ICE, ({socketId, sdp}: SocketData) => {
+              console.log(ACTION.ICE, socketId);
+              pc[socketId].addIceCandidate(sdp);
+            });
             socket.current.emit(
               ACTION.JOIN_ROOM,
               {roomId: 'wwwwwwwwww', create: true},
