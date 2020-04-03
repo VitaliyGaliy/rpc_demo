@@ -157,10 +157,10 @@ const PublisherScreen = () => {
               });
             });
 
-            pc.onicecandidate = function(event) {
-              socket.current.emit(ACTION.ICE, {socketId, sdp: event}, () => {});
-              // send event.candidate to peer
-            };
+            // pc.onicecandidate = function(event) {
+            //   socket.current.emit(ACTION.ICE, {socketId, sdp: event}, () => {});
+            //   // send event.candidate to peer
+            // };
 
             return stream;
             // return capture.current.publish(stream);
@@ -183,16 +183,6 @@ const PublisherScreen = () => {
         .catch(error => {
           // Log error
         });
-      // pc.createOffer().then(desc => {
-      //   pc.setLocalDescription(desc).then(() => {
-      //     console.log('desc', desc);
-      //     // Send pc.localDescription to peer
-      //   });
-      // });
-
-      // pc.onicecandidate = function(event) {
-      //   // send event.candidate to peer
-      // };
     });
   };
 
