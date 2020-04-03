@@ -177,6 +177,11 @@ const PublisherScreen = () => {
                 );
               });
             });
+            socket.current.on(ACTION.ICE, ({socketId, sdp}: SocketData) => {
+              console.log('on(ACTION.ICE, ', socketId, sdp);
+              const candidate = new RTCIceCandidate(sdp);
+               pcs[socketId].addIceCandidate(candidate)
+            });
             console.log('start emit(ACTION.JOIN_ROOM');
             socket.current.emit(
               ACTION.JOIN_ROOM,
