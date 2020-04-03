@@ -139,11 +139,13 @@ const PublisherScreen = () => {
                 ],
               });
               pcs[socketId].addStream(stream);
-              pcs[socketId].onicecandidate = function(event) {
-                console.log('start emit(ACTION.ICE', event);
-                socket.current.emit(ACTION.ICE, {socketId, sdp: event}, e => {
-                  console.log('ok emit(ACTION.ICE,', e);
-                });
+              pcs[socketId].onicecandidate = function({candidate}) {
+                if(candidate){
+                    console.log('start emit(ACTION.ICE', candidate);
+                  socket.current.emit(ACTION.ICE, {socketId, sdp: {candidate}}, e => {
+                    console.log('ok emit(ACTION.ICE,', e);
+                  });
+                }
               };
               console.log('pcs[socketId].createOffer()', socketId);
               pcs[socketId].createOffer().then(desc => {
@@ -156,7 +158,7 @@ const PublisherScreen = () => {
                   console.log('start emit(ACTION.SDP', desc);
                   socket.current.emit(
                     ACTION.SDP,
-                    {socketId, sdp: JSON.stringify(desc)},
+                    {socketId, sdp: desc},
                     e => {
                       console.log('ok emit(ACTION.SDP', desc);
                     },
