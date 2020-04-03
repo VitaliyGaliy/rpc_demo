@@ -93,7 +93,7 @@ const PublisherScreen = () => {
         }
       }
       mediaDevices
-        .getDisplayMedia({
+        .getUserMedia({
           audio: true,
           video: {
             mandatory: {
@@ -123,39 +123,56 @@ const PublisherScreen = () => {
             // });
             const pcs: Record<string, RTCPeerConnection> = {};
             socket.current.on(ACTION.JOIN_ROOM, ({socketId}: SocketData) => {
-              console.log(ACTION.JOIN_ROOM, socketId);
-              pcs[socketId] = new RTCPeerConnection();
+              pcs[socketId] = new RTCPeerConnection({
+                iceServers: [
+                  {
+                    urls: ['turn:18.196.113.204:3478'],
+                    username: 'testUser',
+                    credential: 'testPassword',
+                  },
+                  {
+                    urls: ['stun:18.196.113.204:3478'],
+                    username: 'testUser',
+                    credential: 'testPassword',
+                  },
+                ],
+              });
               pcs[socketId].addStream(stream);
               pcs[socketId].onicecandidate = function(event) {
-                socket.current.emit(
-                  ACTION.ICE,
-                  {socketId, sdp: event},
-                  () => {},
-                );
+                // console.log(' pcs[socketId].onicecandidate', event);
+                socket.current.emit(ACTION.ICE, {socketId, sdp: event}, e => {
+                  console.log('socket.current.emit(ACTION.ICE,', e);
+                });
               };
               pcs[socketId].createOffer().then(desc => {
                 pcs[socketId].setLocalDescription(desc).then(() => {
-                  socket.current.emit(ACTION.SDP, {socketId, sdp: desc}, () => {
-                    // console.log('socketId', socketId);
-                  });
+                  socket.current.emit(
+                    ACTION.SDP,
+                    {socketId, sdp: JSON.stringify(desc)},
+                    e => {
+                      console.log('socket.current.emit - ACTION.SDP', socketId);
+                    },
+                  );
                 });
               });
               // получаем оффер из pc и делаем
             });
+
             socket.current.on(ACTION.SDP, ({socketId, sdp}: SocketData) => {
-              console.log(ACTION.SDP, socketId);
-              pc[socketId].setRemoteDescription(sdp).then(() => {});
-            });
-             socket.current.on(ACTION.ICE, ({socketId, sdp}: SocketData) => {
-              console.log(ACTION.ICE, socketId);
-              pc[socketId].addIceCandidate(sdp);
+              console.log(' socket.current.on(ACTION.SDP, ', socketId);
+
+              pc[socketId].setRemoteDescription(sdp).then(() => {
+                console.log('pc[socketId].setRemoteDescription', sdp);
+              });
             });
             socket.current.emit(
               ACTION.JOIN_ROOM,
               {roomId: 'wwwwwwwwww', create: true},
-              () => {},
+              e => {
+                console.log('ACTION.JOIN_ROOM', e);
+              },
             );
-            return stream;
+            // return stream;
             // return capture.current.publish(stream);
           } catch (e) {
             if (e.response && e.response.status && ERROR[e.response.status]) {
