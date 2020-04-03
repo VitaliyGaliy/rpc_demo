@@ -121,47 +121,40 @@ const PublisherScreen = () => {
             //   } else {
             //   }
             // });
-            console.log('Date.now()', Date.now().toString());
-
-            var pc = new RTCPeerConnection();
-            pc.addStream(stream);
-            // let socketId =undefined
-
-            pc.createOffer().then(desc => {
-              pc.setLocalDescription(desc).then(() => {
-                socket.current.emit(
-                  ACTION.JOIN_ROOM,
-                  {roomId: 'wwwwwwwwww', create: true},
-                  () => {},
-                );
-                socket.current.on(
+            const pcs:Record<string,RTCPeerConnection> = {};
+            socket.current.on(
                   ACTION.JOIN_ROOM,
                   ({socketId}: SocketData) => {
-                    console.log('socketId!!!!!', socketId);
+                    console.log( ACTION.JOIN_ROOM, socketId);
+                    pcs[socketId] = new RTCPeerConnection();
+                    pcs[socketId].addStream(stream);
+                    pcs[socketId].onicecandidate = function(event) {
+                    socket.current.emit(ACTION.ICE, {socketId, sdp: event}, () => {});
+                    };
+                    pcs[socketId].createOffer().then(desc => {
+                      pcs[socketId].setLocalDescription(desc).then(() => {
+                         socket.current.emit(
+                          ACTION.SDP,
+                          {socketId, sdp: desc},
+                          () => {
+                            // console.log('socketId', socketId);
+                          },
+                        );
+                      });
+                    });
                     // получаем оффер из pc и делаем
-                    socket.current.emit(
-                      ACTION.SDP,
-                      {socketId, sdp: desc},
-                      () => {
-                        // console.log('socketId', socketId);
-                      },
-                    );
+                   
                   },
                 );
-
-                socket.current.on(ACTION.SDP, ({socketId, sdp}: SocketData) => {
-                  pc[socketId].setRemoteDescription(sdp).then(() => {});
-                  console.log('socketId@@@@@', socketId);
-                  // проверяем что socket тот же, что мы получили ранее, получаем ансвер в sdp и добавляем его в pc
-                });
-              });
+            socket.current.on(ACTION.SDP, ({socketId, sdp}: SocketData) => {
+              console.log(ACTION.SDP, socketId);
+              pc[socketId].setRemoteDescription(sdp).then(() => {});
             });
-
-            pc.onicecandidate = function(event) {
-              socket.current.emit(ACTION.ICE, {socketId, sdp: event}, () => {});
-              // send event.candidate to peer
-            };
-
+            socket.current.emit(
+                      ACTION.JOIN_ROOM,
+                      {roomId: 'wwwwwwwwww', create: true},
+                      () => {},
+                    );
             return stream;
             // return capture.current.publish(stream);
           } catch (e) {
