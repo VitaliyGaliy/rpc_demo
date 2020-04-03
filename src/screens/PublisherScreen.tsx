@@ -1,4 +1,4 @@
-import debug from 'debug';
+// import debug from 'debug';
 
 import React, {useEffect, useState, useRef} from 'react';
 import {
@@ -10,71 +10,51 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {
-  registerGlobals,
+  // RTCPeerConnection,
+  RTCIceCandidate,
+  RTCSessionDescription,
   RTCView,
+  MediaStream,
   MediaStreamTrack,
   mediaDevices,
+  registerGlobals,
 } from 'react-native-webrtc';
 import {useFocusEffect} from '@react-navigation/native';
 import {activateKeepAwake, deactivateKeepAwake} from 'expo-keep-awake';
+import socketIOClient from 'socket.io-client';
+// import {v1 as uuidv1} from 'uuid';
 
 import {ConferenceApi} from '../mediaStreaming/conference-api';
 import {ERROR} from '../mediaStreaming/config/constants';
 
-debug.enable('*');
+// debug.enable('*');
+
+export enum ACTION {
+  START = 'start',
+  FINISH = 'finish',
+
+  ICE_SERVERS = 'iceServers',
+  ROOM_SIZE = 'roomSize',
+  JOIN_ROOM = 'joinRoom',
+  LEAVE_ROOM = 'leaveRoom',
+  ICE = 'ice',
+  SDP = 'sdp',
+  STREAM_ENDED = 'streamEnded',
+  WB_SYNC = 'wbSync',
+  WB_GET_ALL = 'wbGetAll',
+}
+const uuId = Date.now().toString();
 
 const PublisherScreen = () => {
   let capture = useRef<ConferenceApi>();
+  let socket = useRef<SocketIOClient.Socket>();
   const [stream, setStream] = useState(null);
   const [connection, setConnection] = useState<Boolean | string>(false);
 
   useEffect(() => {
     registerGlobals();
-
-    setConnection('pending');
-
-    // const pc = new RTCPeerConnection(configuration);
-
-    let isFront = true;
-    mediaDevices.enumerateDevices().then(sourceInfos => {
-      console.log(sourceInfos);
-      let videoSourceId;
-      for (let i = 0; i < sourceInfos.length; i++) {
-        const sourceInfo = sourceInfos[i];
-        if (
-          sourceInfo.kind == 'videoinput' &&
-          sourceInfo.facing == (isFront ? 'front' : 'environment')
-        ) {
-          videoSourceId = sourceInfo.deviceId;
-        }
-      }
-      mediaDevices
-        .getDisplayMedia({
-          audio: false,
-          video: {
-            mandatory: {
-              minWidth: 500, // Provide your own width, height and frame rate here
-              minHeight: 300,
-              minFrameRate: 30,
-            },
-            facingMode: isFront ? 'user' : 'environment',
-            optional: videoSourceId ? [{sourceId: videoSourceId}] : [],
-          },
-        })
-        .then(stream => {
-          // console.log('stream', stream);
-          setStream(stream);
-          setConnection(true);
-          // Got stream!
-        })
-        .then(video => {
-          // setStream(video);
-          activateKeepAwake();
-        })
-        .catch(error => {
-          // Log error
-        });
-    });
+    const endpoint = 'https://tabrecorder.codeda.com';
+    socket.current = socketIOClient(endpoint);
   }, []);
 
   useFocusEffect(
@@ -94,43 +74,126 @@ const PublisherScreen = () => {
   );
 
   const onPublish = async () => {
-    // setConnection('pending');
+    setConnection('pending');
     const bitrate = 0;
     const configuration = {iceServers: [{url: 'stun:stun.l.google.com:19302'}]};
-    try {
-      capture.current = new ConferenceApi({
-        maxIncomingBitrate: bitrate || 0,
-        simulcast: false,
-        stream: 'stream1',
-        url: 'https://rpc.codeda.com/0',
-        token:
-          'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdHJlYW0iOiJzdHJlYW0xIiwib3BlcmF0aW9uIjoiMSIsImV4cCI6MTU4NTg0MDk4MiwiaWF0IjoxNTg0ODA0MTgyfQ.GApJ3KjICTCc0KqE_vXAfc1tfV9cR4VQY1t9cjlozyRjpZC5yNWQ180XgFV-1dwwS9CI1wWzVZ-hBDgOMYj5Qw',
-      }).on('connectionstatechange', ({state}) => {
-        // console.log('connectionstatechange', state);
-        if (state === 'connected') {
-          setConnection(true);
-        } else {
+    const pc = new RTCPeerConnection(configuration);
+
+    let isFront = true;
+    mediaDevices.enumerateDevices().then(sourceInfos => {
+      console.log(sourceInfos);
+      let videoSourceId;
+      for (let i = 0; i < sourceInfos.length; i++) {
+        const sourceInfo = sourceInfos[i];
+        if (
+          sourceInfo.kind == 'videoinput' &&
+          sourceInfo.facing == (isFront ? 'front' : 'environment')
+        ) {
+          videoSourceId = sourceInfo.deviceId;
         }
-      });
-
-      // console.log(
-      //   ' stream.getVideoTracks()[0].getCapabilities()',
-      //   stream.getVideoTracks()[0].getCapabilities(),
-      // );
-      // console.log('stream..getConstraints()', stream.getConstraints());
-      // console.log('stream!!!', stream.captureStream);
-
-      return capture.current.publish(stream);
-    } catch (e) {
-      if (e.response && e.response.status && ERROR[e.response.status]) {
-        console.log('ERROR', ERROR[e.response.status]);
-        alert(ERROR[e.response.status]);
       }
-      console.log(e);
-      if (capture.current) {
-        capture.current.close();
-      }
-    }
+      mediaDevices
+        .getDisplayMedia({
+          audio: true,
+          video: {
+            mandatory: {
+              minWidth: 500, // Provide your own width, height and frame rate here
+              minHeight: 300,
+              minFrameRate: 30,
+            },
+            facingMode: isFront ? 'user' : 'environment',
+            optional: videoSourceId ? [{sourceId: videoSourceId}] : [],
+          },
+        })
+        .then(stream => {
+          try {
+            // capture.current = new ConferenceApi({
+            //   maxIncomingBitrate: bitrate || 0,
+            //   simulcast: false,
+            //   stream: 'stream1',
+            //   url: 'https://rpc.codeda.com/0',
+            //   token:
+            //     'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdHJlYW0iOiJzdHJlYW0xIiwib3BlcmF0aW9uIjoiMSIsImV4cCI6MTU4NTg0MDk4MiwiaWF0IjoxNTg0ODA0MTgyfQ.GApJ3KjICTCc0KqE_vXAfc1tfV9cR4VQY1t9cjlozyRjpZC5yNWQ180XgFV-1dwwS9CI1wWzVZ-hBDgOMYj5Qw',
+            // }).on('connectionstatechange', ({state}) => {
+            //   console.log('connectionstatechange', state);
+            //   if (state === 'connected') {
+            //     setConnection(true);
+            //   } else {
+            //   }
+            // });
+            console.log('Date.now()', Date.now().toString());
+
+            var pc = new RTCPeerConnection();
+            pc.addStream(stream);
+            // let socketId =undefined
+
+            pc.createOffer().then(desc => {
+              pc.setLocalDescription(desc).then(() => {
+                socket.current.emit(
+                  ACTION.JOIN_ROOM,
+                  {roomId: 'wwwwwwwwww', create: true},
+                  () => {},
+                );
+                socket.current.on(
+                  ACTION.JOIN_ROOM,
+                  ({socketId}: SocketData) => {
+                    console.log('socketId!!!!!', socketId);
+                    // получаем оффер из pc и делаем
+                    socket.current.emit(
+                      ACTION.SDP,
+                      {socketId, sdp: desc},
+                      () => {
+                        // console.log('socketId', socketId);
+                      },
+                    );
+                  },
+                );
+
+                socket.current.on(ACTION.SDP, ({socketId, sdp}: SocketData) => {
+                  pc[socketId].setRemoteDescription(sdp).then(() => {});
+                  console.log('socketId@@@@@', socketId);
+                  // проверяем что socket тот же, что мы получили ранее, получаем ансвер в sdp и добавляем его в pc
+                });
+              });
+            });
+
+            pc.onicecandidate = function(event) {
+              socket.current.emit(ACTION.ICE, {socketId, sdp: event}, () => {});
+              // send event.candidate to peer
+            };
+
+            return stream;
+            // return capture.current.publish(stream);
+          } catch (e) {
+            if (e.response && e.response.status && ERROR[e.response.status]) {
+              console.log('ERROR', ERROR[e.response.status]);
+              alert(ERROR[e.response.status]);
+            }
+            console.log(e);
+            if (capture.current) {
+              capture.current.close();
+            }
+          }
+          // Got stream!
+        })
+        .then(video => {
+          setStream(video);
+          activateKeepAwake();
+        })
+        .catch(error => {
+          // Log error
+        });
+      // pc.createOffer().then(desc => {
+      //   pc.setLocalDescription(desc).then(() => {
+      //     console.log('desc', desc);
+      //     // Send pc.localDescription to peer
+      //   });
+      // });
+
+      // pc.onicecandidate = function(event) {
+      //   // send event.candidate to peer
+      // };
+    });
   };
 
   const onUnpublish = async () => {
@@ -153,13 +216,12 @@ const PublisherScreen = () => {
       return <ActivityIndicator size="small" color="#00ff00" />;
     }
   };
-  // console.log('stream return', stream);
 
   return (
     // <ScrollView style={{flex: 1, flexDirection: 'column'}}>
     <View style={styles.container}>
       {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />}
-      <Button title="Publish" onPress={onPublish} />
+      {renderSwitch(connection)}
     </View>
     // </ScrollView>
   );

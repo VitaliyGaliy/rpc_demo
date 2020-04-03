@@ -72,7 +72,7 @@ export class ConferenceApi extends EventEmitter implements IConferenceApi {
       ...configs,
     };
     this.api = new MediasoupRestApi(this.configs.url, this.configs.token);
-    this.device = new Device({handlerName: 'Chrome55'});
+    this.device = new Device({handlerName: 'ReactNative'});
   }
   async startRecording() {
     const {stream, kinds} = this.configs;
