@@ -123,7 +123,7 @@ const PublisherScreen = () => {
             // });
             const pcs: Record<string, RTCPeerConnection> = {};
             socket.current.on(ACTION.JOIN_ROOM, ({socketId}: SocketData) => {
-             console.log('on(ACTION.JOIN_ROOM,', socketId);
+              console.log('on(ACTION.JOIN_ROOM,', socketId);
               pcs[socketId] = new RTCPeerConnection({
                 iceServers: [
                   {
@@ -147,14 +147,18 @@ const PublisherScreen = () => {
               };
               console.log('pcs[socketId].createOffer()', socketId);
               pcs[socketId].createOffer().then(desc => {
-                console.log('pcs[socketId].setLocalDescription()', socketId,desc);
+                console.log(
+                  'pcs[socketId].setLocalDescription()',
+                  socketId,
+                  desc,
+                );
                 pcs[socketId].setLocalDescription(desc).then(() => {
                   console.log('start emit(ACTION.SDP', desc);
                   socket.current.emit(
                     ACTION.SDP,
                     {socketId, sdp: JSON.stringify(desc)},
                     e => {
-                    console.log('ok emit(ACTION.SDP', desc);
+                      console.log('ok emit(ACTION.SDP', desc);
                     },
                   );
                 });
@@ -164,7 +168,11 @@ const PublisherScreen = () => {
             socket.current.on(ACTION.SDP, ({socketId, sdp}: SocketData) => {
               console.log('on(ACTION.SDP, ', socketId, sdp);
               pc[socketId].setRemoteDescription(sdp).then(() => {
-                console.log('ok pc[socketId].setRemoteDescription',socketId, sdp);
+                console.log(
+                  'ok pc[socketId].setRemoteDescription',
+                  socketId,
+                  sdp,
+                );
               });
             });
             console.log('start emit(ACTION.JOIN_ROOM');
@@ -172,7 +180,7 @@ const PublisherScreen = () => {
               ACTION.JOIN_ROOM,
               {roomId: 'wwwwwwwwww', create: true},
               e => {
-            console.log('ok emit(ACTION.JOIN_ROOM');
+                console.log('ok emit(ACTION.JOIN_ROOM');
               },
             );
             // return stream;
