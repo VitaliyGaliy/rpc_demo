@@ -80,7 +80,7 @@ const PublisherScreen = () => {
     const pc = new RTCPeerConnection(configuration);
 
     let isFront = true;
-    mediaDevices.enumerateDevices().then(sourceInfos => {
+    mediaDevices.enumerateDevices().then((sourceInfos) => {
       console.log(sourceInfos);
       let videoSourceId;
       for (let i = 0; i < sourceInfos.length; i++) {
@@ -92,6 +92,7 @@ const PublisherScreen = () => {
           videoSourceId = sourceInfo.deviceId;
         }
       }
+
       mediaDevices
         .getUserMedia({
           audio: true,
@@ -105,7 +106,7 @@ const PublisherScreen = () => {
             optional: videoSourceId ? [{sourceId: videoSourceId}] : [],
           },
         })
-        .then(stream => {
+        .then((stream) => {
           try {
             // capture.current = new ConferenceApi({
             //   maxIncomingBitrate: bitrate || 0,
@@ -139,20 +140,20 @@ const PublisherScreen = () => {
                 ],
               });
               pcs[socketId].addStream(stream);
-              pcs[socketId].onicecandidate = function({candidate}) {
+              pcs[socketId].onicecandidate = function ({candidate}) {
                 if (candidate) {
                   console.log('start emit(ACTION.ICE', candidate);
                   socket.current.emit(
                     ACTION.ICE,
                     {socketId, sdp: {candidate}},
-                    e => {
+                    (e) => {
                       console.log('ok emit(ACTION.ICE,', e);
                     },
                   );
                 }
               };
               console.log('pcs[socketId].createOffer()', socketId);
-              pcs[socketId].createOffer().then(desc => {
+              pcs[socketId].createOffer().then((desc) => {
                 console.log(
                   'pcs[socketId].setLocalDescription()',
                   socketId,
@@ -160,9 +161,13 @@ const PublisherScreen = () => {
                 );
                 pcs[socketId].setLocalDescription(desc).then(() => {
                   console.log('start emit(ACTION.SDP', desc);
-                  socket.current.emit(ACTION.SDP, {socketId, sdp: desc}, e => {
-                    console.log('ok emit(ACTION.SDP', desc);
-                  });
+                  socket.current.emit(
+                    ACTION.SDP,
+                    {socketId, sdp: desc},
+                    (e) => {
+                      console.log('ok emit(ACTION.SDP', desc);
+                    },
+                  );
                 });
               });
             });
@@ -180,13 +185,13 @@ const PublisherScreen = () => {
             socket.current.on(ACTION.ICE, ({socketId, sdp}: SocketData) => {
               console.log('on(ACTION.ICE, ', socketId, sdp);
               const candidate = new RTCIceCandidate(sdp);
-               pcs[socketId].addIceCandidate(candidate)
+              pcs[socketId].addIceCandidate(candidate);
             });
             console.log('start emit(ACTION.JOIN_ROOM');
             socket.current.emit(
               ACTION.JOIN_ROOM,
               {roomId: 'wwwwwwwwww', create: true},
-              e => {
+              (e) => {
                 console.log('ok emit(ACTION.JOIN_ROOM');
               },
             );
@@ -204,11 +209,11 @@ const PublisherScreen = () => {
           }
           // Got stream!
         })
-        .then(video => {
+        .then((video) => {
           setStream(video);
           activateKeepAwake();
         })
-        .catch(error => {
+        .catch((error) => {
           // Log error
         });
     });
@@ -225,7 +230,7 @@ const PublisherScreen = () => {
     } catch (error) {}
   };
 
-  const renderSwitch = connection => {
+  const renderSwitch = (connection) => {
     if (connection === false) {
       return <Button title="Publish" onPress={onPublish} />;
     } else if (connection === true && stream) {
@@ -238,7 +243,7 @@ const PublisherScreen = () => {
   return (
     // <ScrollView style={{flex: 1, flexDirection: 'column'}}>
     <View style={styles.container}>
-      {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />}
+      {/* {stream && <RTCView streamURL={stream.toURL()} style={styles.video1} />} */}
       {renderSwitch(connection)}
     </View>
     // </ScrollView>
